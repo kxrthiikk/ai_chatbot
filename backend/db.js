@@ -2,19 +2,40 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 // Database configuration
-const dbConfig = {
-  host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-  port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
-  database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'dental_bot',
-  user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true
-};
+let dbConfig;
+
+// Check if MYSQL_URL is available (Railway's preferred method)
+if (process.env.MYSQL_URL) {
+  console.log('🔗 Using MYSQL_URL configuration');
+  // Parse the MYSQL_URL
+  const url = new URL(process.env.MYSQL_URL);
+  dbConfig = {
+    host: url.hostname,
+    port: parseInt(url.port) || 3306,
+    database: url.pathname.substring(1), // Remove leading slash
+    user: url.username,
+    password: url.password,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+  };
+} else {
+  console.log('🔧 Using individual MYSQL_ variables');
+  dbConfig = {
+    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+    port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
+    database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'dental_bot',
+    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    // Remove invalid options that cause warnings
+    // acquireTimeout: 60000, // Removed - not valid for mysql2
+    // timeout: 60000, // Removed - not valid for mysql2
+    // reconnect: true // Removed - not valid for mysql2
+  };
+}
 
 // Debug logging
 console.log('🔍 Database Configuration:');
