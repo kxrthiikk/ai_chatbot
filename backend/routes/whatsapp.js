@@ -269,7 +269,7 @@ async function getConversationState(userId) {
   }
 }
 
-// Process user message based on current state
+// Enhanced message processing with better NLP
 async function processUserMessage(user, messageText, state) {
   const { pool, isPostgreSQL } = require('../db');
   
@@ -282,6 +282,10 @@ async function processUserMessage(user, messageText, state) {
     let context = JSON.parse(state.context || '{}');
     
     console.log(`📝 Current context:`, context);
+    
+    // Enhanced message understanding
+    const messageLower = messageText.toLowerCase();
+    const words = messageLower.split(' ');
     
     switch (currentState) {
       case 'welcome':
@@ -298,12 +302,22 @@ Please choose an option (1-4) or type your message.`;
         break;
         
       case 'main_menu':
-        if (messageText.includes('1') || messageText.toLowerCase().includes('book') || messageText.toLowerCase().includes('appointment')) {
+        // Enhanced intent recognition
+        if (messageLower.includes('1') || 
+            messageLower.includes('book') || 
+            messageLower.includes('appointment') ||
+            messageLower.includes('schedule') ||
+            messageLower.includes('make appointment')) {
           response = `📅 Great! Let's book your appointment.
 
 What date would you like to book? (e.g., "tomorrow", "next Monday", or "2024-01-15")`;
           newState = 'booking_date';
-        } else if (messageText.includes('2') || messageText.toLowerCase().includes('check') || messageText.toLowerCase().includes('available')) {
+        } else if (messageLower.includes('2') || 
+                   messageLower.includes('check') || 
+                   messageLower.includes('available') ||
+                   messageLower.includes('slots') ||
+                   messageLower.includes('time') ||
+                   messageLower.includes('hours')) {
           response = `📋 Available time slots:
 
 Monday - Friday: 9:00 AM - 6:00 PM
@@ -312,10 +326,16 @@ Sunday: Closed
 
 Would you like to book an appointment? (yes/no)`;
           newState = 'check_slots';
-        } else if (messageText.includes('3') || messageText.toLowerCase().includes('cancel')) {
+        } else if (messageLower.includes('3') || 
+                   messageLower.includes('cancel') ||
+                   messageLower.includes('reschedule')) {
           response = `❌ To cancel an appointment, please provide your appointment ID or phone number.`;
           newState = 'cancel_appointment';
-        } else if (messageText.includes('4') || messageText.toLowerCase().includes('info')) {
+        } else if (messageLower.includes('4') || 
+                   messageLower.includes('info') ||
+                   messageLower.includes('information') ||
+                   messageLower.includes('help') ||
+                   messageLower.includes('about')) {
           response = `ℹ️ Dental Care Information:
 
 📍 Location: 123 Dental Street, City
@@ -324,6 +344,16 @@ Would you like to book an appointment? (yes/no)`;
 💳 We accept all major insurance plans
 
 Need anything else?`;
+          newState = 'main_menu';
+        } else if (messageLower.includes('hello') || 
+                   messageLower.includes('hi') ||
+                   messageLower.includes('hey')) {
+          response = `Hello! How can I help you today?
+
+1️⃣ Book appointment
+2️⃣ Check slots
+3️⃣ Cancel appointment
+4️⃣ Get information`;
           newState = 'main_menu';
         } else {
           response = `I didn't understand that. Please choose:
@@ -336,8 +366,28 @@ Need anything else?`;
         break;
         
       case 'booking_date':
-        // Simple date processing (you can enhance this)
-        response = `📅 You selected: ${messageText}
+        // Enhanced date processing
+        let appointmentDate = messageText;
+        
+        // Simple date parsing
+        if (messageLower.includes('tomorrow')) {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          appointmentDate = tomorrow.toISOString().split('T')[0];
+        } else if (messageLower.includes('next week')) {
+          const nextWeek = new Date();
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          appointmentDate = nextWeek.toISOString().split('T')[0];
+        } else if (messageLower.includes('monday')) {
+          // Find next Monday
+          const today = new Date();
+          const daysUntilMonday = (8 - today.getDay()) % 7;
+          const nextMonday = new Date(today);
+          nextMonday.setDate(today.getDate() + daysUntilMonday);
+          appointmentDate = nextMonday.toISOString().split('T')[0];
+        }
+        
+        response = `📅 You selected: ${appointmentDate}
 
 What time would you prefer?
 - Morning (9:00 AM - 12:00 PM)
@@ -345,12 +395,23 @@ What time would you prefer?
 - Evening (3:00 PM - 6:00 PM)
 
 Please choose your preferred time.`;
-        context.bookingDate = messageText;
+        context.bookingDate = appointmentDate;
         newState = 'booking_time';
         break;
         
       case 'booking_time':
-        response = `⏰ You selected: ${messageText}
+        // Enhanced time processing
+        let appointmentTime = messageText;
+        
+        if (messageLower.includes('morning') || messageLower.includes('9') || messageLower.includes('10') || messageLower.includes('11')) {
+          appointmentTime = 'Morning (9:00 AM - 12:00 PM)';
+        } else if (messageLower.includes('afternoon') || messageLower.includes('12') || messageLower.includes('1') || messageLower.includes('2')) {
+          appointmentTime = 'Afternoon (12:00 PM - 3:00 PM)';
+        } else if (messageLower.includes('evening') || messageLower.includes('3') || messageLower.includes('4') || messageLower.includes('5') || messageLower.includes('6')) {
+          appointmentTime = 'Evening (3:00 PM - 6:00 PM)';
+        }
+        
+        response = `⏰ You selected: ${appointmentTime}
 
 What type of service do you need?
 1️⃣ General Checkup
@@ -360,7 +421,7 @@ What type of service do you need?
 5️⃣ Other
 
 Please choose a service (1-5).`;
-        context.bookingTime = messageText;
+        context.bookingTime = appointmentTime;
         newState = 'booking_service';
         break;
         
