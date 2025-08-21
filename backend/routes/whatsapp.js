@@ -24,12 +24,18 @@ router.get('/debug', (req, res) => {
 // Status endpoint to check bot health
 router.get('/status', async (req, res) => {
   try {
-    const { pool } = require('../db');
+    const { pool, isPostgreSQL } = require('../db');
     
     // Test database connection
-    const connection = await pool.getConnection();
-    await connection.execute('SELECT 1 as test');
-    connection.release();
+    if (isPostgreSQL) {
+      const client = await pool.connect();
+      await client.query('SELECT 1 as test');
+      client.release();
+    } else {
+      const connection = await pool.getConnection();
+      await connection.execute('SELECT 1 as test');
+      connection.release();
+    }
     
     res.json({
       status: 'OK',
@@ -146,26 +152,44 @@ async function handleIncomingMessage(message, value) {
 
 // Create or get user from database
 async function createOrGetUser(phoneNumber) {
-  const { pool } = require('../db');
+  const { pool, isPostgreSQL } = require('../db');
   
   try {
     // Check if user exists
-    const [existingUsers] = await pool.execute(
-      'SELECT * FROM users WHERE phone_number = ?',
-      [phoneNumber]
-    );
+    let existingUsers;
+    if (isPostgreSQL) {
+      const result = await pool.query(
+        'SELECT * FROM users WHERE phone_number = $1',
+        [phoneNumber]
+      );
+      existingUsers = result.rows;
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM users WHERE phone_number = ?',
+        [phoneNumber]
+      );
+      existingUsers = rows;
+    }
     
     if (existingUsers.length > 0) {
       return existingUsers[0];
     }
     
     // Create new user
-    const [result] = await pool.execute(
-      'INSERT INTO users (phone_number, name, created_by, updated_by) VALUES (?, ?, 1, 1)',
-      [phoneNumber, `User_${phoneNumber.slice(-4)}`]
-    );
-    
-    return { id: result.insertId, phone_number: phoneNumber };
+    let result;
+    if (isPostgreSQL) {
+      result = await pool.query(
+        'INSERT INTO users (phone_number, name, created_by, updated_by) VALUES ($1, $2, 1, 1) RETURNING id',
+        [phoneNumber, `User_${phoneNumber.slice(-4)}`]
+      );
+      return { id: result.rows[0].id, phone_number: phoneNumber };
+    } else {
+      const [rows] = await pool.execute(
+        'INSERT INTO users (phone_number, name, created_by, updated_by) VALUES (?, ?, 1, 1)',
+        [phoneNumber, `User_${phoneNumber.slice(-4)}`]
+      );
+      return { id: rows.insertId, phone_number: phoneNumber };
+    }
   } catch (error) {
     console.error('❌ Error creating/getting user:', error);
     throw error;
@@ -174,25 +198,43 @@ async function createOrGetUser(phoneNumber) {
 
 // Get conversation state for user
 async function getConversationState(userId) {
-  const { pool } = require('../db');
+  const { pool, isPostgreSQL } = require('../db');
   
   try {
-    const [states] = await pool.execute(
-      'SELECT * FROM conversation_states WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
-      [userId]
-    );
+    let states;
+    if (isPostgreSQL) {
+      const result = await pool.query(
+        'SELECT * FROM conversation_states WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 1',
+        [userId]
+      );
+      states = result.rows;
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM conversation_states WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
+        [userId]
+      );
+      states = rows;
+    }
     
     if (states.length > 0) {
       return states[0];
     }
     
     // Create initial state
-    const [result] = await pool.execute(
-      'INSERT INTO conversation_states (user_id, current_state, context, created_by, updated_by) VALUES (?, ?, ?, 1, 1)',
-      [userId, 'welcome', JSON.stringify({})]
-    );
-    
-    return { id: result.insertId, user_id: userId, current_state: 'welcome', context: '{}' };
+    let result;
+    if (isPostgreSQL) {
+      result = await pool.query(
+        'INSERT INTO conversation_states (user_id, current_state, context, created_by, updated_by) VALUES ($1, $2, $3, 1, 1) RETURNING id',
+        [userId, 'welcome', JSON.stringify({})]
+      );
+      return { id: result.rows[0].id, user_id: userId, current_state: 'welcome', context: '{}' };
+    } else {
+      const [rows] = await pool.execute(
+        'INSERT INTO conversation_states (user_id, current_state, context, created_by, updated_by) VALUES (?, ?, ?, 1, 1)',
+        [userId, 'welcome', JSON.stringify({})]
+      );
+      return { id: rows.insertId, user_id: userId, current_state: 'welcome', context: '{}' };
+    }
   } catch (error) {
     console.error('❌ Error getting conversation state:', error);
     throw error;
@@ -201,7 +243,7 @@ async function getConversationState(userId) {
 
 // Process user message based on current state
 async function processUserMessage(user, messageText, state) {
-  const { pool } = require('../db');
+  const { pool, isPostgreSQL } = require('../db');
   
   try {
     const currentState = state.current_state;
@@ -349,10 +391,17 @@ Would you like to book a different appointment? (yes/no)`;
     }
     
     // Update conversation state
-    await pool.execute(
-      'UPDATE conversation_states SET current_state = ?, context = ?, updated_at = NOW(), updated_by = 1 WHERE id = ?',
-      [newState, JSON.stringify(context), state.id]
-    );
+    if (isPostgreSQL) {
+      await pool.query(
+        'UPDATE conversation_states SET current_state = $1, context = $2, updated_at = NOW(), updated_by = 1 WHERE id = $3',
+        [newState, JSON.stringify(context), state.id]
+      );
+    } else {
+      await pool.execute(
+        'UPDATE conversation_states SET current_state = ?, context = ?, updated_at = NOW(), updated_by = 1 WHERE id = ?',
+        [newState, JSON.stringify(context), state.id]
+      );
+    }
     
     return response;
   } catch (error) {
@@ -363,16 +412,23 @@ Would you like to book a different appointment? (yes/no)`;
 
 // Save appointment to database
 async function saveAppointment(userId, context) {
-  const { pool } = require('../db');
+  const { pool, isPostgreSQL } = require('../db');
   
   try {
     // Convert date string to proper format (you can enhance this)
     const appointmentDate = new Date().toISOString().split('T')[0]; // Simple fallback
     
-    await pool.execute(
-      'INSERT INTO appointments (user_id, appointment_date, appointment_time, service_type, status, created_by, updated_by) VALUES (?, ?, ?, ?, ?, 1, 1)',
-      [userId, appointmentDate, context.bookingTime, context.bookingService, 'pending']
-    );
+    if (isPostgreSQL) {
+      await pool.query(
+        'INSERT INTO appointments (user_id, appointment_date, appointment_time, service_type, status, created_by, updated_by) VALUES ($1, $2, $3, $4, $5, 1, 1)',
+        [userId, appointmentDate, context.bookingTime, context.bookingService, 'pending']
+      );
+    } else {
+      await pool.execute(
+        'INSERT INTO appointments (user_id, appointment_date, appointment_time, service_type, status, created_by, updated_by) VALUES (?, ?, ?, ?, ?, 1, 1)',
+        [userId, appointmentDate, context.bookingTime, context.bookingService, 'pending']
+      );
+    }
     
     console.log(`✅ Appointment saved for user ${userId}`);
   } catch (error) {

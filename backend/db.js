@@ -1,26 +1,20 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config();
+const { Pool } = require('pg');
 
 // Database configuration
 let dbConfig;
+let isPostgreSQL = false;
 
-// Check if we're using PostgreSQL (Render) or MySQL
+// Check if we're using PostgreSQL (Supabase/Render) or MySQL
 if (process.env.DATABASE_URL) {
-  // PostgreSQL connection (Render)
+  // PostgreSQL connection (Supabase/Render)
   console.log('🔗 Using PostgreSQL (DATABASE_URL)');
-  const url = new URL(process.env.DATABASE_URL);
+  isPostgreSQL = true;
   dbConfig = {
-    host: url.hostname,
-    port: parseInt(url.port) || 5432,
-    database: url.pathname.substring(1),
-    user: url.username,
-    password: url.password,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    ssl: process.env.SSL_ENABLED === 'true' ? {
-      rejectUnauthorized: process.env.SSL_REJECT_UNAUTHORIZED !== 'false'
-    } : false
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false // Required for Supabase
+    }
   };
 } else if (process.env.MYSQL_URL) {
   // MySQL connection via URL
@@ -59,11 +53,17 @@ if (process.env.DATABASE_URL) {
 
 // Debug logging
 console.log('🔍 Database Configuration:');
-console.log('Host:', dbConfig.host);
-console.log('Port:', dbConfig.port);
-console.log('Database:', dbConfig.database);
-console.log('User:', dbConfig.user);
-console.log('Password:', dbConfig.password ? '***SET***' : '***NOT SET***');
+if (isPostgreSQL) {
+  console.log('Type: PostgreSQL');
+  console.log('Connection String: SET');
+} else {
+  console.log('Type: MySQL');
+  console.log('Host:', dbConfig.host);
+  console.log('Port:', dbConfig.port);
+  console.log('Database:', dbConfig.database);
+  console.log('User:', dbConfig.user);
+  console.log('Password:', dbConfig.password ? '***SET***' : '***NOT SET***');
+}
 
 // All Environment Variables
 console.log('All Environment Variables:');
@@ -80,15 +80,26 @@ console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? 'SET' : 'NOT SET');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
 
 // Create connection pool
-const pool = mysql.createPool(dbConfig);
+let pool;
+if (isPostgreSQL) {
+  pool = new Pool(dbConfig);
+} else {
+  pool = mysql.createPool(dbConfig);
+}
 
 // Test database connection
 async function testConnection() {
   try {
     console.log('🔍 Attempting database connection...');
-    const connection = await pool.getConnection();
-    console.log('✅ Database connected successfully');
-    connection.release();
+    if (isPostgreSQL) {
+      const client = await pool.connect();
+      console.log('✅ PostgreSQL database connected successfully');
+      client.release();
+    } else {
+      const connection = await pool.getConnection();
+      console.log('✅ MySQL database connected successfully');
+      connection.release();
+    }
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
@@ -100,55 +111,108 @@ async function testConnection() {
 // Initialize database tables
 async function initializeTables() {
   try {
-    const connection = await pool.getConnection();
+    if (isPostgreSQL) {
+      const client = await pool.connect();
+      
+      // Create users table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          phone_number VARCHAR(20) UNIQUE NOT NULL,
+          name VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by INTEGER DEFAULT 1,
+          updated_by INTEGER DEFAULT 1
+        )
+      `);
+
+      // Create appointments table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS appointments (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          appointment_date DATE NOT NULL,
+          appointment_time TIME NOT NULL,
+          service_type VARCHAR(100),
+          status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by INTEGER DEFAULT 1,
+          updated_by INTEGER DEFAULT 1,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      // Create conversation_states table
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS conversation_states (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          current_state VARCHAR(50) NOT NULL,
+          context JSONB,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_by INTEGER DEFAULT 1,
+          updated_by INTEGER DEFAULT 1,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      client.release();
+    } else {
+      const connection = await pool.getConnection();
+      
+      // Create users table
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          phone_number VARCHAR(20) UNIQUE NOT NULL,
+          name VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          created_by INT DEFAULT 1,
+          updated_by INT DEFAULT 1
+        )
+      `);
+
+      // Create appointments table
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS appointments (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          appointment_date DATE NOT NULL,
+          appointment_time TIME NOT NULL,
+          service_type VARCHAR(100),
+          status ENUM('pending', 'confirmed', 'cancelled', 'completed') DEFAULT 'pending',
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          created_by INT DEFAULT 1,
+          updated_by INT DEFAULT 1,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      // Create conversation_states table
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS conversation_states (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          current_state VARCHAR(50) NOT NULL,
+          context JSON,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          created_by INT DEFAULT 1,
+          updated_by INT DEFAULT 1,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      `);
+
+      connection.release();
+    }
     
-    // Create users table
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        phone_number VARCHAR(20) UNIQUE NOT NULL,
-        name VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by INT DEFAULT 1,
-        updated_by INT DEFAULT 1
-      )
-    `);
-
-    // Create appointments table
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS appointments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        appointment_date DATE NOT NULL,
-        appointment_time TIME NOT NULL,
-        service_type VARCHAR(100),
-        status ENUM('pending', 'confirmed', 'cancelled', 'completed') DEFAULT 'pending',
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by INT DEFAULT 1,
-        updated_by INT DEFAULT 1,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-
-    // Create conversation_states table
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS conversation_states (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        current_state VARCHAR(50) NOT NULL,
-        context JSON,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        created_by INT DEFAULT 1,
-        updated_by INT DEFAULT 1,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-
-    connection.release();
     console.log('✅ Database tables initialized successfully');
     return true;
   } catch (error) {
@@ -160,5 +224,6 @@ async function initializeTables() {
 module.exports = {
   pool,
   testConnection,
-  initializeTables
+  initializeTables,
+  isPostgreSQL
 };
