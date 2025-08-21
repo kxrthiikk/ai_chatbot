@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-const { testConnection, initializeDatabase } = require('./db');
+const { testConnection, initializeTables } = require('./db');
 const whatsappRoutes = require('./routes/whatsapp');
 const bookingRoutes = require('./routes/booking');
 
@@ -52,7 +52,7 @@ async function startServer() {
     await testConnection();
     
     // Initialize database tables
-    await initializeDatabase();
+    await initializeTables();
     
     // Start server
     app.listen(PORT, () => {

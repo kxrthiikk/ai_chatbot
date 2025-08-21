@@ -13,13 +13,32 @@ router.get('/webhook', (req, res) => {
 
   const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
 
+  // Debug logging
+  console.log('🔍 Webhook verification request received:');
+  console.log('Mode:', mode);
+  console.log('Token:', token);
+  console.log('Challenge:', challenge);
+  console.log('Expected verify token:', verifyToken);
+  console.log('All query parameters:', req.query);
+
   if (mode && token) {
     if (mode === 'subscribe' && token === verifyToken) {
-      console.log('✅ WhatsApp webhook verified');
+      console.log('✅ WhatsApp webhook verified successfully');
+      console.log('Sending challenge response:', challenge);
       res.status(200).send(challenge);
     } else {
+      console.log('❌ Invalid verification token');
+      console.log('Expected:', verifyToken, 'Received:', token);
       res.sendStatus(403);
     }
+  } else {
+    // When accessed directly without verification parameters
+    console.log('📋 Webhook endpoint accessed directly');
+    res.status(200).json({
+      status: 'OK',
+      message: 'WhatsApp webhook endpoint is ready',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
