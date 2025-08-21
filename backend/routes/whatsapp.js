@@ -21,6 +21,36 @@ router.get('/debug', (req, res) => {
   });
 });
 
+// Status endpoint to check bot health
+router.get('/status', async (req, res) => {
+  try {
+    const { pool } = require('../db');
+    
+    // Test database connection
+    const connection = await pool.getConnection();
+    await connection.execute('SELECT 1 as test');
+    connection.release();
+    
+    res.json({
+      status: 'OK',
+      message: 'WhatsApp Bot is running and database is connected',
+      timestamp: new Date().toISOString(),
+      features: {
+        webhook: '✅ Active',
+        database: '✅ Connected',
+        whatsapp: process.env.WHATSAPP_TOKEN ? '✅ Configured' : '❌ Missing Token'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Route for GET requests (webhook verification)
 router.get('/webhook', (req, res) => {
   const { 'hub.mode': mode, 'hub.challenge': challenge, 'hub.verify_token': token } = req.query;
