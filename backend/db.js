@@ -10,12 +10,65 @@ if (process.env.DATABASE_URL) {
   // PostgreSQL connection (Supabase/Render)
   console.log('🔗 Using PostgreSQL (DATABASE_URL)');
   isPostgreSQL = true;
+  
+  // Try both connection string and individual parameters
+  try {
+    // Parse the connection string to modify it
+    const url = new URL(process.env.DATABASE_URL);
+    
+    // Force IPv4 by using the hostname instead of IP
+    dbConfig = {
+      host: url.hostname,
+      port: parseInt(url.port) || 5432,
+      database: url.pathname.substring(1),
+      user: url.username,
+      password: url.password,
+      ssl: {
+        rejectUnauthorized: false // Required for Supabase
+      },
+      // Force IPv4 connection
+      family: 4
+    };
+    
+    console.log('🔧 PostgreSQL Config (Individual):', {
+      host: dbConfig.host,
+      port: dbConfig.port,
+      database: dbConfig.database,
+      user: dbConfig.user,
+      ssl: 'enabled'
+    });
+  } catch (error) {
+    console.log('⚠️ Failed to parse DATABASE_URL, using connection string directly');
+    dbConfig = {
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    };
+  }
+} else if (process.env.SUPABASE_HOST) {
+  // Individual Supabase credentials
+  console.log('🔗 Using PostgreSQL (Individual Supabase credentials)');
+  isPostgreSQL = true;
   dbConfig = {
-    connectionString: process.env.DATABASE_URL,
+    host: process.env.SUPABASE_HOST,
+    port: parseInt(process.env.SUPABASE_PORT) || 5432,
+    database: process.env.SUPABASE_DATABASE || 'postgres',
+    user: process.env.SUPABASE_USER || 'postgres',
+    password: process.env.SUPABASE_PASSWORD,
     ssl: {
-      rejectUnauthorized: false // Required for Supabase
-    }
+      rejectUnauthorized: false
+    },
+    family: 4 // Force IPv4
   };
+  
+  console.log('🔧 Supabase Config:', {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    database: dbConfig.database,
+    user: dbConfig.user,
+    ssl: 'enabled'
+  });
 } else if (process.env.MYSQL_URL) {
   // MySQL connection via URL
   console.log('🔗 Using MYSQL_URL configuration');
