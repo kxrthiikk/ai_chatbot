@@ -133,12 +133,15 @@ async function handleIncomingMessage(message, value) {
     
     // Create or get user
     const user = await createOrGetUser(phoneNumber);
+    console.log(`👤 User:`, user);
     
     // Get current conversation state
     const state = await getConversationState(user.id);
+    console.log(`💬 State:`, state);
     
     // Process message based on current state
     const response = await processUserMessage(user, messageText, state);
+    console.log(`🤖 Response:`, response);
     
     // Send response back to WhatsApp
     if (response) {
@@ -147,6 +150,7 @@ async function handleIncomingMessage(message, value) {
     
   } catch (error) {
     console.error('❌ Error handling incoming message:', error);
+    console.error('❌ Error stack:', error.stack);
   }
 }
 
@@ -155,6 +159,8 @@ async function createOrGetUser(phoneNumber) {
   const { pool, isPostgreSQL } = require('../db');
   
   try {
+    console.log(`🔍 Creating/getting user for phone: ${phoneNumber}`);
+    
     // Check if user exists
     let existingUsers;
     if (isPostgreSQL) {
@@ -163,17 +169,22 @@ async function createOrGetUser(phoneNumber) {
         [phoneNumber]
       );
       existingUsers = result.rows;
+      console.log(`🔍 PostgreSQL query result:`, result.rows);
     } else {
       const [rows] = await pool.execute(
         'SELECT * FROM users WHERE phone_number = ?',
         [phoneNumber]
       );
       existingUsers = rows;
+      console.log(`🔍 MySQL query result:`, rows);
     }
     
     if (existingUsers.length > 0) {
+      console.log(`✅ Found existing user:`, existingUsers[0]);
       return existingUsers[0];
     }
+    
+    console.log(`🆕 Creating new user for phone: ${phoneNumber}`);
     
     // Create new user
     let result;
@@ -182,16 +193,21 @@ async function createOrGetUser(phoneNumber) {
         'INSERT INTO users (phone_number, name, created_by, updated_by) VALUES ($1, $2, 1, 1) RETURNING id',
         [phoneNumber, `User_${phoneNumber.slice(-4)}`]
       );
-      return { id: result.rows[0].id, phone_number: phoneNumber };
+      const newUser = { id: result.rows[0].id, phone_number: phoneNumber };
+      console.log(`✅ Created new PostgreSQL user:`, newUser);
+      return newUser;
     } else {
       const [rows] = await pool.execute(
         'INSERT INTO users (phone_number, name, created_by, updated_by) VALUES (?, ?, 1, 1)',
         [phoneNumber, `User_${phoneNumber.slice(-4)}`]
       );
-      return { id: rows.insertId, phone_number: phoneNumber };
+      const newUser = { id: rows.insertId, phone_number: phoneNumber };
+      console.log(`✅ Created new MySQL user:`, newUser);
+      return newUser;
     }
   } catch (error) {
     console.error('❌ Error creating/getting user:', error);
+    console.error('❌ Error stack:', error.stack);
     throw error;
   }
 }
@@ -201,6 +217,8 @@ async function getConversationState(userId) {
   const { pool, isPostgreSQL } = require('../db');
   
   try {
+    console.log(`🔍 Getting conversation state for user: ${userId}`);
+    
     let states;
     if (isPostgreSQL) {
       const result = await pool.query(
@@ -208,17 +226,22 @@ async function getConversationState(userId) {
         [userId]
       );
       states = result.rows;
+      console.log(`🔍 PostgreSQL conversation states:`, result.rows);
     } else {
       const [rows] = await pool.execute(
         'SELECT * FROM conversation_states WHERE user_id = ? ORDER BY updated_at DESC LIMIT 1',
         [userId]
       );
       states = rows;
+      console.log(`🔍 MySQL conversation states:`, rows);
     }
     
     if (states.length > 0) {
+      console.log(`✅ Found existing conversation state:`, states[0]);
       return states[0];
     }
+    
+    console.log(`🆕 Creating new conversation state for user: ${userId}`);
     
     // Create initial state
     let result;
@@ -227,16 +250,21 @@ async function getConversationState(userId) {
         'INSERT INTO conversation_states (user_id, current_state, context, created_by, updated_by) VALUES ($1, $2, $3, 1, 1) RETURNING id',
         [userId, 'welcome', JSON.stringify({})]
       );
-      return { id: result.rows[0].id, user_id: userId, current_state: 'welcome', context: '{}' };
+      const newState = { id: result.rows[0].id, user_id: userId, current_state: 'welcome', context: '{}' };
+      console.log(`✅ Created new PostgreSQL conversation state:`, newState);
+      return newState;
     } else {
       const [rows] = await pool.execute(
         'INSERT INTO conversation_states (user_id, current_state, context, created_by, updated_by) VALUES (?, ?, ?, 1, 1)',
         [userId, 'welcome', JSON.stringify({})]
       );
-      return { id: rows.insertId, user_id: userId, current_state: 'welcome', context: '{}' };
+      const newState = { id: rows.insertId, user_id: userId, current_state: 'welcome', context: '{}' };
+      console.log(`✅ Created new MySQL conversation state:`, newState);
+      return newState;
     }
   } catch (error) {
     console.error('❌ Error getting conversation state:', error);
+    console.error('❌ Error stack:', error.stack);
     throw error;
   }
 }
@@ -246,10 +274,14 @@ async function processUserMessage(user, messageText, state) {
   const { pool, isPostgreSQL } = require('../db');
   
   try {
+    console.log(`🔍 Processing message: "${messageText}" for user ${user.id} in state "${state.current_state}"`);
+    
     const currentState = state.current_state;
     let response = '';
     let newState = currentState;
     let context = JSON.parse(state.context || '{}');
+    
+    console.log(`📝 Current context:`, context);
     
     switch (currentState) {
       case 'welcome':
@@ -391,21 +423,32 @@ Would you like to book a different appointment? (yes/no)`;
     }
     
     // Update conversation state
-    if (isPostgreSQL) {
-      await pool.query(
-        'UPDATE conversation_states SET current_state = $1, context = $2, updated_at = NOW(), updated_by = 1 WHERE id = $3',
-        [newState, JSON.stringify(context), state.id]
-      );
-    } else {
-      await pool.execute(
-        'UPDATE conversation_states SET current_state = ?, context = ?, updated_at = NOW(), updated_by = 1 WHERE id = ?',
-        [newState, JSON.stringify(context), state.id]
-      );
+    console.log(`💾 Updating state from "${currentState}" to "${newState}"`);
+    try {
+      if (isPostgreSQL) {
+        await pool.query(
+          'UPDATE conversation_states SET current_state = $1, context = $2, updated_at = NOW(), updated_by = 1 WHERE id = $3',
+          [newState, JSON.stringify(context), state.id]
+        );
+        console.log(`✅ PostgreSQL state updated successfully`);
+      } else {
+        await pool.execute(
+          'UPDATE conversation_states SET current_state = ?, context = ?, updated_at = NOW(), updated_by = 1 WHERE id = ?',
+          [newState, JSON.stringify(context), state.id]
+        );
+        console.log(`✅ MySQL state updated successfully`);
+      }
+    } catch (dbError) {
+      console.error('❌ Database update error:', dbError);
+      console.error('❌ Database update error stack:', dbError.stack);
+      throw dbError;
     }
     
+    console.log(`✅ Message processed successfully. Response: "${response}"`);
     return response;
   } catch (error) {
     console.error('❌ Error processing user message:', error);
+    console.error('❌ Error stack:', error.stack);
     return 'Sorry, something went wrong. Please try again.';
   }
 }
