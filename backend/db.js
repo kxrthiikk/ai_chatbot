@@ -13,17 +13,38 @@ const dbConfig = {
   queueLimit: 0
 };
 
+// Debug logging
+console.log('🔍 Database Configuration:');
+console.log('Host:', process.env.DB_HOST || 'localhost (default)');
+console.log('Port:', process.env.DB_PORT || '3307 (default)');
+console.log('Database:', process.env.DB_NAME || 'dental_bot (default)');
+console.log('User:', process.env.DB_USER || 'root (default)');
+console.log('Password:', process.env.DB_PASSWORD ? '***SET***' : '***NOT SET***');
+console.log('All Environment Variables:');
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_PORT:', process.env.DB_PORT);
+console.log('DB_NAME:', process.env.DB_NAME);
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? 'SET' : 'NOT SET');
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLPORT:', process.env.MYSQLPORT);
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? 'SET' : 'NOT SET');
+
 // Create connection pool
 const pool = mysql.createPool(dbConfig);
 
 // Test database connection
 async function testConnection() {
   try {
+    console.log('🔍 Attempting database connection...');
     const connection = await pool.getConnection();
     console.log('✅ Database connected successfully');
     connection.release();
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
+    console.error('❌ Full error:', error);
     process.exit(1);
   }
 }
