@@ -1,0 +1,269 @@
+version: "3.1"
+
+nlu:
+- intent: greet
+  examples: |
+    - hey
+    - hello
+    - hi
+    - hello there
+    - good morning
+    - good evening
+    - hey there
+    - let's go
+    - hey dude
+    - goodmorning
+    - goodevening
+    - good afternoon
+    - book appointment
+    - i want to book an appointment
+    - i need to book an appointment
+    - can i book an appointment
+    - help me book an appointment
+    - appointment booking
+    - dental appointment
+    - dentist appointment
+
+- intent: goodbye
+  examples: |
+    - cu
+    - good by
+    - cee you later
+    - good night
+    - bye
+    - goodbye
+    - see you around
+    - bye bye
+    - see you later
+    - see ya
+    - good bye
+    - see you
+    - thank you bye
+    - thanks bye
+
+- intent: book_appointment
+  examples: |
+    - i want to book an appointment
+    - i need to book an appointment
+    - can i book an appointment
+    - help me book an appointment
+    - appointment booking
+    - dental appointment
+    - dentist appointment
+    - book a slot
+    - schedule appointment
+    - make an appointment
+    - i want to see the dentist
+    - need dental care
+    - dental checkup
+    - teeth cleaning appointment
+
+- intent: cancel_appointment
+  examples: |
+    - cancel my appointment
+    - i want to cancel
+    - cancel appointment
+    - cancel booking
+    - i need to cancel
+    - cancel my booking
+    - cancel the appointment
+    - cancel the booking
+    - i can't make it
+    - need to reschedule
+    - change appointment
+
+- intent: reschedule_appointment
+  examples: |
+    - reschedule my appointment
+    - change appointment time
+    - change appointment date
+    - reschedule booking
+    - change my appointment
+    - move appointment
+    - change time
+    - change date
+    - reschedule
+    - move booking
+
+- intent: check_appointment
+  examples: |
+    - check my appointment
+    - appointment status
+    - when is my appointment
+    - what time is my appointment
+    - appointment details
+    - my booking details
+    - check booking
+    - appointment confirmation
+    - booking status
+
+- intent: provide_name
+  examples: |
+    - my name is [John](name)
+    - i am [Sarah](name)
+    - [Mike](name)
+    - [Emily](name)
+    - [David](name)
+    - [Lisa](name)
+    - [Robert](name)
+    - [Jennifer](name)
+    - [Michael](name)
+    - [Jessica](name)
+    - [William](name)
+    - [Ashley](name)
+    - [James](name)
+    - [Amanda](name)
+    - [Christopher](name)
+    - [Stephanie](name)
+
+- intent: provide_service
+  examples: |
+    - [Regular Checkup](service_type)
+    - [Cleaning](service_type)
+    - [Filling](service_type)
+    - [Root Canal](service_type)
+    - [Extraction](service_type)
+    - [Other](service_type)
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - i need a [checkup](service_type)
+    - i want [cleaning](service_type)
+    - [dental cleaning](service_type)
+    - [tooth filling](service_type)
+    - [root canal treatment](service_type)
+    - [tooth extraction](service_type)
+
+- intent: provide_date
+  examples: |
+    - [25/12/2024](date)
+    - [15/01/2025](date)
+    - [03/02/2025](date)
+    - [20/03/2025](date)
+    - [10/04/2025](date)
+    - [05/05/2025](date)
+    - [12/06/2025](date)
+    - [18/07/2025](date)
+    - [25/08/2025](date)
+    - [30/09/2025](date)
+    - [15/10/2025](date)
+    - [22/11/2025](date)
+    - [08/12/2025](date)
+    - tomorrow
+    - next week
+    - next monday
+    - next tuesday
+    - next wednesday
+    - next thursday
+    - next friday
+    - next saturday
+    - next sunday
+
+- intent: provide_time
+  examples: |
+    - [09:00](time)
+    - [10:00](time)
+    - [11:00](time)
+    - [14:00](time)
+    - [15:00](time)
+    - [16:00](time)
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - morning
+    - afternoon
+    - evening
+    - 9 am
+    - 10 am
+    - 11 am
+    - 2 pm
+    - 3 pm
+    - 4 pm
+
+- intent: confirm_booking
+  examples: |
+    - yes
+    - confirm
+    - ok
+    - sure
+    - yes please
+    - confirm booking
+    - yes confirm
+    - that's correct
+    - correct
+    - right
+    - yes that's right
+    - proceed
+    - go ahead
+    - book it
+    - confirm appointment
+
+- intent: deny_booking
+  examples: |
+    - no
+    - cancel
+    - not confirm
+    - no thanks
+    - don't confirm
+    - cancel booking
+    - no cancel
+    - that's not right
+    - incorrect
+    - wrong
+    - no that's wrong
+    - don't proceed
+    - don't book
+    - cancel appointment
+
+- intent: help
+  examples: |
+    - help
+    - help me
+    - what can you do
+    - what do you do
+    - how does this work
+    - i need help
+    - can you help me
+    - what are your features
+    - what services do you offer
+    - how to book
+    - how to cancel
+    - how to reschedule
+
+- intent: thank
+  examples: |
+    - thanks
+    - thank you
+    - thanks a lot
+    - thank you very much
+    - thanks so much
+    - thank you so much
+    - thanks for your help
+    - thank you for helping
+    - appreciate it
+    - thanks appreciate it
+    - thank you appreciate it
+
+- intent: out_of_scope
+  examples: |
+    - i want to order a pizza
+    - what's the weather like
+    - tell me a joke
+    - play music
+    - what time is it
+    - how old are you
+    - what's your name
+    - who created you
+    - what's the capital of france
+    - solve this math problem
+    - translate this text
+    - book a flight
+    - order food
+    - make a reservation
+    - buy tickets

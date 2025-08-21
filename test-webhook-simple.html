@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhook Test</title>
+</head>
+<body>
+    <h1>WhatsApp Webhook Test</h1>
+    
+    <h2>Test 1: GET Request (Webhook Verification)</h2>
+    <button onclick="testGet()">Test GET</button>
+    
+    <h2>Test 2: POST Request (Message Reception)</h2>
+    <button onclick="testPost()">Test POST</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function testGet() {
+            const url = 'https://robust-emu-amused.ngrok-free.app/api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=dental_bot_verify_2024&hub.challenge=test123';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'User-Agent': 'Meta-Webhook-Verification'
+                    }
+                });
+                const text = await response.text();
+                document.getElementById('result').innerHTML = `
+                    <h3>GET Response:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Content: ${text.substring(0, 200)}...</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>GET Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        async function testPost() {
+            const url = 'https://robust-emu-amused.ngrok-free.app/api/whatsapp/webhook';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        object: 'whatsapp_business_account',
+                        entry: [{
+                            changes: [{
+                                value: {
+                                    messages: [{
+                                        from: '1234567890',
+                                        text: { body: 'Hello' }
+                                    }]
+                                }
+                            }]
+                        }]
+                    })
+                });
+                const text = await response.text();
+                document.getElementById('result').innerHTML = `
+                    <h3>POST Response:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Content: ${text}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>POST Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

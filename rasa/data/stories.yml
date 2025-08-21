@@ -1,0 +1,177 @@
+version: "3.1"
+
+stories:
+- story: book appointment happy path
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: provide_name
+    entities:
+    - name: "John"
+  - slot_was_set:
+    - name: "John"
+  - action: utter_ask_service
+  - intent: provide_service
+    entities:
+    - service_type: "Regular Checkup"
+  - slot_was_set:
+    - service_type: "Regular Checkup"
+  - action: utter_ask_date
+  - intent: provide_date
+    entities:
+    - date: "25/12/2024"
+  - slot_was_set:
+    - appointment_date: "25/12/2024"
+  - action: utter_ask_time
+  - intent: provide_time
+    entities:
+    - time: "09:00"
+  - slot_was_set:
+    - appointment_time: "09:00"
+  - action: utter_confirm_booking
+  - intent: confirm_booking
+  - action: utter_booking_confirmed
+
+- story: book appointment with number selection
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: provide_name
+    entities:
+    - name: "Sarah"
+  - slot_was_set:
+    - name: "Sarah"
+  - action: utter_ask_service
+  - intent: provide_service
+  - slot_was_set:
+    - service_type: "Cleaning"
+  - action: utter_ask_date
+  - intent: provide_date
+    entities:
+    - date: "15/01/2025"
+  - slot_was_set:
+    - appointment_date: "15/01/2025"
+  - action: utter_ask_time
+  - intent: provide_time
+  - slot_was_set:
+    - appointment_time: "10:00"
+  - action: utter_confirm_booking
+  - intent: confirm_booking
+  - action: utter_booking_confirmed
+
+- story: cancel booking
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: provide_name
+    entities:
+    - name: "Mike"
+  - slot_was_set:
+    - name: "Mike"
+  - action: utter_ask_service
+  - intent: provide_service
+    entities:
+    - service_type: "Filling"
+  - slot_was_set:
+    - service_type: "Filling"
+  - action: utter_ask_date
+  - intent: provide_date
+    entities:
+    - date: "03/02/2025"
+  - slot_was_set:
+    - appointment_date: "03/02/2025"
+  - action: utter_ask_time
+  - intent: provide_time
+    entities:
+    - time: "11:00"
+  - slot_was_set:
+    - appointment_time: "11:00"
+  - action: utter_confirm_booking
+  - intent: deny_booking
+  - action: utter_booking_cancelled
+
+- story: ask for help
+  steps:
+  - intent: help
+  - action: utter_help
+
+- story: say goodbye
+  steps:
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: thank user
+  steps:
+  - intent: thank
+  - action: utter_thank
+
+- story: out of scope
+  steps:
+  - intent: out_of_scope
+  - action: utter_out_of_scope
+
+- story: invalid date
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: provide_name
+    entities:
+    - name: "Emily"
+  - slot_was_set:
+    - name: "Emily"
+  - action: utter_ask_service
+  - intent: provide_service
+    entities:
+    - service_type: "Root Canal"
+  - slot_was_set:
+    - service_type: "Root Canal"
+  - action: utter_ask_date
+  - intent: provide_date
+  - action: utter_invalid_date
+  - intent: provide_date
+    entities:
+    - date: "20/03/2025"
+  - slot_was_set:
+    - appointment_date: "20/03/2025"
+  - action: utter_ask_time
+  - intent: provide_time
+    entities:
+    - time: "14:00"
+  - slot_was_set:
+    - appointment_time: "14:00"
+  - action: utter_confirm_booking
+  - intent: confirm_booking
+  - action: utter_booking_confirmed
+
+- story: invalid time
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: provide_name
+    entities:
+    - name: "David"
+  - slot_was_set:
+    - name: "David"
+  - action: utter_ask_service
+  - intent: provide_service
+    entities:
+    - service_type: "Extraction"
+  - slot_was_set:
+    - service_type: "Extraction"
+  - action: utter_ask_date
+  - intent: provide_date
+    entities:
+    - date: "10/04/2025"
+  - slot_was_set:
+    - appointment_date: "10/04/2025"
+  - action: utter_ask_time
+  - intent: provide_time
+  - action: utter_invalid_time
+  - intent: provide_time
+    entities:
+    - time: "15:00"
+  - slot_was_set:
+    - appointment_time: "15:00"
+  - action: utter_confirm_booking
+  - intent: confirm_booking
+  - action: utter_booking_confirmed

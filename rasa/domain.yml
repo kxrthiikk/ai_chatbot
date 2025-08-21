@@ -1,0 +1,115 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - book_appointment
+  - cancel_appointment
+  - reschedule_appointment
+  - check_appointment
+  - provide_name
+  - provide_service
+  - provide_date
+  - provide_time
+  - confirm_booking
+  - deny_booking
+  - help
+  - thank
+  - out_of_scope
+
+entities:
+  - name
+  - service_type
+  - date
+  - time
+  - phone_number
+
+slots:
+  name:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: name
+  service_type:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: service_type
+  appointment_date:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: date
+  appointment_time:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: time
+  phone_number:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: phone_number
+
+responses:
+  utter_greet:
+    - text: "👋 Welcome to Dental Care Bot! I can help you book a dental appointment. Please tell me your name:"
+  
+  utter_goodbye:
+    - text: "Thank you for using our dental services! Have a great day! 🦷"
+  
+  utter_help:
+    - text: "I can help you with:\n• Booking appointments\n• Canceling appointments\n• Rescheduling appointments\n• Checking appointment status\n\nJust let me know what you need!"
+  
+  utter_ask_name:
+    - text: "Please tell me your name:"
+  
+  utter_ask_service:
+    - text: "What type of dental service do you need?\n1. Regular Checkup\n2. Cleaning\n3. Filling\n4. Root Canal\n5. Extraction\n6. Other\n\nPlease reply with the number or service name:"
+  
+  utter_ask_date:
+    - text: "When would you like to book your appointment? Please enter the date (DD/MM/YYYY format):"
+  
+  utter_ask_time:
+    - text: "Available time slots:\n1. 09:00 AM - 10:00 AM\n2. 10:00 AM - 11:00 AM\n3. 11:00 AM - 12:00 PM\n4. 02:00 PM - 03:00 PM\n5. 03:00 PM - 04:00 PM\n6. 04:00 PM - 05:00 PM\n\nPlease select a time slot (1-6):"
+  
+  utter_confirm_booking:
+    - text: "📅 Appointment Summary:\n\nService: {service_type}\nDate: {appointment_date}\nTime: {appointment_time}\n\nPlease confirm your booking by typing 'YES' or 'CONFIRM':"
+  
+  utter_booking_confirmed:
+    - text: "✅ Appointment confirmed!\n\n📅 Your appointment details:\nService: {service_type}\nDate: {appointment_date}\nTime: {appointment_time}\n\nWe'll send you a reminder 24 hours before your appointment.\n\nThank you for choosing our dental services! 🦷\n\nTo book another appointment, just send 'hello' or 'book appointment'."
+  
+  utter_booking_cancelled:
+    - text: "❌ Appointment cancelled.\n\nTo book a new appointment, send 'hello' or 'book appointment'."
+  
+  utter_invalid_date:
+    - text: "Please enter a valid date in DD/MM/YYYY format (e.g., 25/12/2024):"
+  
+  utter_invalid_time:
+    - text: "Please select a valid time slot (1-6):"
+  
+  utter_thank:
+    - text: "You're welcome! 😊"
+  
+  utter_out_of_scope:
+    - text: "I'm sorry, I don't understand that. I can help you with dental appointment booking. Type 'help' to see what I can do."
+
+actions:
+  - utter_greet
+  - utter_goodbye
+  - utter_help
+  - utter_ask_name
+  - utter_ask_service
+  - utter_ask_date
+  - utter_ask_time
+  - utter_confirm_booking
+  - utter_booking_confirmed
+  - utter_booking_cancelled
+  - utter_invalid_date
+  - utter_invalid_time
+  - utter_thank
+  - utter_out_of_scope
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

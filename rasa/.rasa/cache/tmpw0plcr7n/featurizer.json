@@ -1,0 +1,76 @@
+{
+  "type": "MaxHistoryTrackerFeaturizer",
+  "state_featurizer": {
+    "action_texts": [],
+    "entity_tag_specs": [],
+    "feature_states": {
+      "intent": {
+        "back": 0,
+        "book_appointment": 1,
+        "cancel_appointment": 2,
+        "check_appointment": 3,
+        "confirm_booking": 4,
+        "deny_booking": 5,
+        "goodbye": 6,
+        "greet": 7,
+        "help": 8,
+        "nlu_fallback": 9,
+        "out_of_scope": 10,
+        "provide_date": 11,
+        "provide_name": 12,
+        "provide_service": 13,
+        "provide_time": 14,
+        "reschedule_appointment": 15,
+        "restart": 16,
+        "session_start": 17,
+        "thank": 18
+      },
+      "action_name": {
+        "action_listen": 0,
+        "action_restart": 1,
+        "action_session_start": 2,
+        "action_default_fallback": 3,
+        "action_deactivate_loop": 4,
+        "action_revert_fallback_events": 5,
+        "action_default_ask_affirmation": 6,
+        "action_default_ask_rephrase": 7,
+        "action_two_stage_fallback": 8,
+        "action_unlikely_intent": 9,
+        "action_back": 10,
+        "...": 11,
+        "action_extract_slots": 12,
+        "utter_greet": 13,
+        "utter_goodbye": 14,
+        "utter_help": 15,
+        "utter_ask_name": 16,
+        "utter_ask_service": 17,
+        "utter_ask_date": 18,
+        "utter_ask_time": 19,
+        "utter_confirm_booking": 20,
+        "utter_booking_confirmed": 21,
+        "utter_booking_cancelled": 22,
+        "utter_invalid_date": 23,
+        "utter_invalid_time": 24,
+        "utter_thank": 25,
+        "utter_out_of_scope": 26
+      },
+      "entities": {
+        "date": 0,
+        "name": 1,
+        "phone_number": 2,
+        "service_type": 3,
+        "time": 4
+      },
+      "slots": {
+        "name_0": 0,
+        "service_type_0": 1,
+        "appointment_date_0": 2,
+        "appointment_time_0": 3,
+        "phone_number_0": 4
+      },
+      "active_loop": {}
+    }
+  },
+  "remove_duplicates": true,
+  "max_history": 5
+}

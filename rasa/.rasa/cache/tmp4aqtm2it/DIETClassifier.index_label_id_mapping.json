@@ -1,0 +1,17 @@
+{
+  "0": "book_appointment",
+  "1": "cancel_appointment",
+  "2": "check_appointment",
+  "3": "confirm_booking",
+  "4": "deny_booking",
+  "5": "goodbye",
+  "6": "greet",
+  "7": "help",
+  "8": "out_of_scope",
+  "9": "provide_date",
+  "10": "provide_name",
+  "11": "provide_service",
+  "12": "provide_time",
+  "13": "reschedule_appointment",
+  "14": "thank"
+}
