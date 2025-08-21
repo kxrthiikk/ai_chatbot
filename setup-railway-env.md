@@ -1,64 +1,47 @@
 # Railway Environment Variables Setup
 
-## **🚀 Quick Setup Guide**
+## **🔧 Updated Environment Variables for ai_chatbot Service**
 
-### **Step 1: Add MySQL Database to Railway**
+Go to your **ai_chatbot service** → **Variables tab** and set these variables:
 
-1. Go to your Railway project dashboard
-2. Click the **"New"** button
-3. Select **"Database"** → **"MySQL"**
-4. Wait for it to provision (usually 1-2 minutes)
-
-### **Step 2: Get Database Connection Details**
-
-1. Click on the **MySQL service** in your project
-2. Go to the **"Connect"** tab
-3. Copy these values:
-   - **Host**: `MYSQLHOST`
-   - **Port**: `MYSQLPORT` (usually 3306)
-   - **Database**: `MYSQLDATABASE`
-   - **Username**: `MYSQLUSER`
-   - **Password**: `MYSQLPASSWORD`
-
-### **Step 3: Set Environment Variables**
-
-1. Go back to your **main service** (the Node.js app)
-2. Click on the **"Variables"** tab
-3. Add these variables one by one:
-
+### **Database Configuration (Use Railway's Internal Discovery)**
 ```
-DB_HOST=MYSQLHOST (from step 2)
-DB_PORT=MYSQLPORT (from step 2)
-DB_NAME=MYSQLDATABASE (from step 2)
-DB_USER=MYSQLUSER (from step 2)
-DB_PASSWORD=MYSQLPASSWORD (from step 2)
+DB_HOST=${{MYSQLHOST}}
+DB_PORT=${{MYSQLPORT}}
+DB_NAME=${{MYSQLDATABASE}}
+DB_USER=${{MYSQLUSER}}
+DB_PASSWORD=${{MYSQLPASSWORD}}
+```
+
+### **Application Configuration**
+```
 PORT=3000
 NODE_ENV=production
 ```
 
-### **Step 4: Add WhatsApp Variables**
-
-You'll also need to add your WhatsApp credentials:
-
+### **WhatsApp Configuration**
 ```
-WHATSAPP_TOKEN=your-whatsapp-token
-WHATSAPP_PHONE_NUMBER_ID=your-phone-number-id
+WHATSAPP_TOKEN=your_whatsapp_token_here
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id_here
 ```
 
-### **Step 5: Redeploy**
+## **🎯 Key Changes:**
+1. **Using Railway's internal variables** (`${{MYSQLHOST}}`, etc.) instead of direct values
+2. **This enables internal service discovery** within Railway's network
+3. **Faster and more reliable connections** between services
 
-After adding all variables:
-1. Railway will automatically redeploy
-2. Check the **"Deployments"** tab
-3. The service should start successfully
+## **📋 Steps:**
+1. **Go to ai_chatbot service**
+2. **Click "Variables" tab**
+3. **Add/Update the variables above**
+4. **Save changes**
+5. **Redeploy the service**
 
-## **🔍 Troubleshooting**
+## **🔍 What This Does:**
+- `${{MYSQLHOST}}` → Internal hostname for MySQL service
+- `${{MYSQLPORT}}` → Internal port for MySQL service
+- `${{MYSQLDATABASE}}` → Database name from MySQL service
+- `${{MYSQLUSER}}` → Username from MySQL service
+- `${{MYSQLPASSWORD}}` → Password from MySQL service
 
-If it still fails:
-1. Check the **"Logs"** in the latest deployment
-2. Make sure all environment variables are set correctly
-3. Verify the database connection details
-
-## **📞 Need Help?**
-
-If you're still having issues, share the error logs from Railway and I'll help you debug further!
+This should resolve the `ETIMEDOUT` issue by using Railway's internal network.

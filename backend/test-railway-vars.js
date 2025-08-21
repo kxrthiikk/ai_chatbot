@@ -15,9 +15,17 @@ vars.forEach(varName => {
 });
 
 console.log('================================');
-console.log('All process.env keys:');
-console.log(Object.keys(process.env).filter(key => 
+console.log('All Railway-related process.env keys:');
+const railwayKeys = Object.keys(process.env).filter(key => 
   key.includes('DB_') || key.includes('MYSQL') || key.includes('RAILWAY')
-));
+);
+console.log(railwayKeys);
+
+console.log('================================');
+console.log('All Railway environment variables:');
+railwayKeys.forEach(key => {
+  const value = process.env[key];
+  console.log(`${key}: ${value || 'NOT SET'}`);
+});
 
 console.log('================================');
