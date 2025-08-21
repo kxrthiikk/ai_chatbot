@@ -5,9 +5,32 @@ const axios = require('axios');
 // Set verify_token
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
 
+// Debug endpoint to check environment variables
+router.get('/debug', (req, res) => {
+  res.json({
+    verifyToken: verifyToken,
+    hasToken: !!verifyToken,
+    envVars: {
+      WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN ? 'SET' : 'NOT SET',
+      WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN ? 'SET' : 'NOT SET',
+      WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID ? 'SET' : 'NOT SET',
+      NODE_ENV: process.env.NODE_ENV,
+      PORT: process.env.PORT
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Route for GET requests (webhook verification)
 router.get('/webhook', (req, res) => {
   const { 'hub.mode': mode, 'hub.challenge': challenge, 'hub.verify_token': token } = req.query;
+
+  // Debug logging
+  console.log('🔍 Webhook verification request:');
+  console.log('Mode:', mode);
+  console.log('Token:', token);
+  console.log('Expected:', verifyToken);
+  console.log('Challenge:', challenge);
 
   if (mode === 'subscribe' && token === verifyToken) {
     console.log('✅ WEBHOOK VERIFIED');
